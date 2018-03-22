@@ -3,46 +3,74 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+river='Kamienna (234)'
+#river='Świślina (2348)'
+r_short=river.split('(')[0]
 
+df = pd.read_csv('incoming/2016/codz_2016_01.csv',encoding='windows-1250',header=None,na_values=[99999.99900000001,99.9],na_filter=True,verbose=True)
 
-df = pd.read_csv('incoming/codz_2016_01.csv',encoding='windows-1250',header=None,na_values=[99999.99900000001,99.9],na_filter=True,verbose=True)
+kam = df[df[2]==river]
 
-kam = df[df[2]=='Kamienna (234)']
 
 dd=pd.to_datetime(kam[3].astype(str)+kam[9].astype(str)+kam[5].astype(str),format='%Y%m%d')
 
 discharge_gauges = kam[1].unique()
-
-prefix = 'incoming/codz_2016_'
-dd={}
+Q_dict={}
+H_dict={}
 for dg in discharge_gauges:
-
 	daty=pd.Series()
 	Q=pd.Series()
 	H=pd.Series()
 
-	for mon in range(1,13):
-		file = prefix+str(mon).zfill(2)+'.csv'
-		df = pd.read_csv(file,encoding='windows-1250',header=None)
-		kam = df[df[1]==dg][df[2]=='Kamienna (234)']
+	for rok in range(2003,2017):
+		prefix = 'incoming/'+str(rok)+"/codz_"+str(rok)+'_'
 
-		if(mon<3):	#przesuniecie roku z powodu roku hydrologicznego
-			shift = 1	
-		else:
-			shift = 0
-		daty = daty.append(pd.to_datetime((kam[3]-shift).astype(str)+kam[9].astype(str)+kam[5].astype(str),format='%Y%m%d'))
-		H=H.append(kam[6])
-		Q=Q.append(kam[7])
+		for mon in range(1,13):
+			file = prefix+str(mon).zfill(2)+'.csv'
+			df = pd.read_csv(file,encoding='windows-1250',header=None)
+			kam = df[df[1]==dg][df[2]==river]
 
-	ts=pd.Series(np.array(Q),index=daty)
-	dd[dg]=ts
+			if(mon<3):	#przesuniecie roku z powodu roku hydrologicznego
+				shift = 1	
+			else:
+				shift = 0
+			daty = daty.append(pd.to_datetime((kam[3]-shift).astype(str)+kam[9].astype(str)+kam[5].astype(str),format='%Y%m%d'))
+			H=H.append(kam[6])
+			Q=Q.append(kam[7])
+
+		ts_Q=pd.Series(np.array(Q),index=daty)
+		Q_dict[dg]=ts_Q
+		ts_H=pd.Series(np.array(H),index=daty)
+		H_dict[dg]=ts_H
 #ts=ts.cumsum()
 
 #	ts.plot()
 #	plt.show()
 
-df = pd.DataFrame(data=dd)
-df=df.replace({99999.99900000001:np.nan})
+df = pd.DataFrame(data=Q_dict)
+df = df.replace({99999.99900000001:np.nan})
+params = {'legend.fontsize': 'x-large',
+          'figure.figsize': (50, 50),
+         'axes.labelsize': 'x-large',
+         'axes.titlesize':'x-large',
+         'xtick.labelsize':'x-large',
+         'ytick.labelsize':'15'}
+plt.rcParams.update(params)
 
-df.plot()
-plt.savefig('asdf.pdf',papertype='a3')
+
+fig =df.plot()
+fig.grid(True)
+plt.savefig('Q_'+r_short+'.pdf',papertype='a3')
+#TODO
+'''
+1. opisy osi
+2. savowanie wyniku
+3. obsługa nierównej długości ciągów
+'''
+#Rysowanie H chwilowo wyłączone
+df = pd.DataFrame(data=H_dict)
+df = df.replace({99999.99900000001:np.nan})
+
+fig=df.plot()
+fig.grid(True)
+plt.savefig('H_'+r_short+'.pdf',papertype='a3')
