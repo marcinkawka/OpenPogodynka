@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-river='Kamienna (234)'
-#river='Świślina (2348)'
+#river='Kamienna (234)'
+river='Świślina (2348)'
 r_short=river.split('(')[0]
 
 df = pd.read_csv('incoming/2016/codz_2016_01.csv',encoding='windows-1250',header=None,na_values=[99999.99900000001,99.9],na_filter=True,verbose=True)
@@ -22,7 +22,7 @@ for dg in discharge_gauges:
 	Q=pd.Series()
 	H=pd.Series()
 
-	for rok in range(2003,2017):
+	for rok in range(2001,2017):
 		prefix = 'incoming/'+str(rok)+"/codz_"+str(rok)+'_'
 
 		for mon in range(1,13):
@@ -46,9 +46,6 @@ for dg in discharge_gauges:
 
 #	ts.plot()
 #	plt.show()
-
-df = pd.DataFrame(data=Q_dict)
-df = df.replace({99999.99900000001:np.nan})
 params = {'legend.fontsize': 'x-large',
           'figure.figsize': (50, 50),
          'axes.labelsize': 'x-large',
@@ -58,19 +55,36 @@ params = {'legend.fontsize': 'x-large',
 plt.rcParams.update(params)
 
 
+df = pd.DataFrame(data=Q_dict)
+df = df.replace({99999.99900000001:np.nan})
+df.to_csv('Q_'+r_short+'.csv')
+
 fig =df.plot()
 fig.grid(True)
+plt.xlabel('Calendar day', fontsize=32)
+plt.ylabel('Observed discharge [m^3/s]', fontsize=32)
+plt.tick_params(axis='both', which='major', labelsize=35)
+plt.tick_params(axis='both', which='minor', labelsize=15)
+plt.legend(loc=1, prop={'size': 36})
 plt.savefig('Q_'+r_short+'.pdf',papertype='a3')
+
 #TODO
 '''
 1. opisy osi
 2. savowanie wyniku
 3. obsługa nierównej długości ciągów
+4. dynamiczny wybór posterunkow co roku
 '''
 #Rysowanie H chwilowo wyłączone
 df = pd.DataFrame(data=H_dict)
-df = df.replace({99999.99900000001:np.nan})
+df = df.replace({99999.99900000001:np.nan,9999:np.nan})
+df.to_csv('H_'+r_short+'.csv')
 
 fig=df.plot()
 fig.grid(True)
+plt.xlabel('Calendar day', fontsize=32)
+plt.ylabel('Observed discharge [m^3/s]', fontsize=32)
+plt.tick_params(axis='both', which='major', labelsize=35)
+plt.tick_params(axis='both', which='minor', labelsize=15)
+plt.legend(loc=1, prop={'size': 36})
 plt.savefig('H_'+r_short+'.pdf',papertype='a3')
