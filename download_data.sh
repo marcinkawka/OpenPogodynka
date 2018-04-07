@@ -1,11 +1,15 @@
 #!/bin/bash
-base_url="https://dane.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_hydrologiczne/dobowe/"
-prefix="wget -e robots=off --cut-dirs=3 --user-agent=Mozilla/5.0 --reject="index.html*" --no-parent --recursive --relative --level=1 --no-directories"
+
 mkdir incoming
 cd incoming
+'''
+#Pobieranie danych hydrologicznych
+base_url="https://dane.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_hydrologiczne/dobowe/"
+prefix="wget -e robots=off --cut-dirs=3 --user-agent=Mozilla/5.0 --reject="index.html*" --no-parent --recursive --relative --level=1 --no-directories"
 
-years=(2016 2015 2014 2013 2012 2011 2010 2009 2008 2007 2006 2005 2004 2003 2002 2001 2000 1999 1998 1997 1996)
-#for y in ${years[*]}
+mkdir dane_hydrologiczne
+cd dane_hydrologiczne
+
 for y in $(seq 1951 2016);
 do
 	mkdir $y
@@ -19,4 +23,28 @@ do
 	
 	cd ..
 done
+cd ..
+'''
 
+#Pobieranie danych meteorologicznych
+base_url="https://dane.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/"
+prefix="wget -e robots=off --cut-dirs=3 --user-agent=Mozilla/5.0 --reject="index.html*" --no-parent --recursive --relative --level=1 --no-directories"
+
+mkdir dane_meteorologiczne
+cd dane_meteorologiczne
+
+subdir="klimat/"
+for y in $(seq 2001 2017);
+do
+	mkdir $y
+	cd $y
+	`$prefix $base_url$subdir$y'/'`
+
+	for f in *.zip
+	do
+		unzip $f
+	done
+	
+	cd ..
+done
+cd ..
