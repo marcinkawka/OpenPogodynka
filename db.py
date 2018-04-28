@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import sqlite3
 import sys
+import time
+import datetime
 
 from datetime import datetime
 from localSettings import *
@@ -48,25 +50,53 @@ class DBInterface:
 			else:
 				values = ', '.join(map(str, gauges))
 				sqlQuery = "INSERT INTO hydroGauges VALUES {}".format(values)
-			print(sqlQuery)
+			#print(sqlQuery)
 			c.execute(sqlQuery)
 			self.conn.commit()
 			print("Sucessfully inserted "+len(gauges)+" gauges")
+
 		except:
 			#print(gauges)
 			#print(type(gauges))
 			print("Unexpected error:", sys.exc_info())
+	
+	def storeMeasurements(self,df,code):
+		'''zapis df do bazy'''
+		c = self.conn.cursor()
+		
+		try:
+			df.to_sql('measurements',self.conn,if_exists='append',index_label='measurement_date')
+			print("Sucessfully inserted "+df.shape[0]+" measurements")
+			self.conn.commit()
+		except TypeError:
+			pass	
+		except:
+			print("Unexpected error:", sys.exc_info())
 
-	def CSVlistHydroGauges(self):
+	def getMeasurementsByCode(self,df,code):
+		'''extract one gauge from DataFrame and returns DataFrame indexed by time'''
+		daty = df[df[0]==code].iloc[:,[3,9,5]]
+		pomiary = df[df[0]==code].iloc[:,[6,7,8]]
+		dd=daty[3].map(str)+" "+daty[9].map(str)+" "+daty[5].map(str)
+		
+		index=pd.to_datetime(dd)
+		pd.DataFrame(data=pomiary)
+		pomiary=pomiary.rename(columns={6:'level',7:'discharge',8:'temperature'})
+		pomiary=pomiary.set_index(pd.to_datetime(dd+" 07:00"))
+		pomiary=pomiary.replace('99.9','None')
+		pomiary=pomiary.replace('99999.999','None')
+		pomiary['gauge_code']=code
+		return pomiary
+
+
+	def CSVupdateHydroGauges(self):
 		'''Returns list of all possible hydrological gauges, mentioned in CSV files '''
-		gauges_DB=dict(self.getGaugesFromDB())
+		self.gauges_DB=dict(self.getGaugesFromDB())
 
 		for rok in range(1951,2017):
 			print("Processing year "+str(rok))
 			for mon in range(1,13):
 				CSVfile = CSVpath+'dane_hydrologiczne/'+str(rok)+"/codz_"+str(rok)+'_'+str(mon).zfill(2)+'.csv'
-					
-			#prefix=CSVpath+'dane_hydrologiczne/2014/codz_2014_05.csv'
 				try:
 					gauges_CSV = dict(self.getGaugesFromFile(CSVfile))
 
@@ -81,9 +111,34 @@ class DBInterface:
 							gauges_DB[int(newGauge[0])]=str(newGauge[1])
 				except OSError:
 					print("Problems reading file "+CSVfile)
-		#self.storeGauges(gauges.items())
-		#for k in gauges.keys():
-		#	print(gauges[k])
+
+	def CSVparseMeasurements(self):
+		'''iterates through CSV files and stores data in SQLiteFile'''
+		
+		for rok in range(2005,2017):
+			print("Processing year "+str(rok))
+			for mon in range(1,13):
+				CSVfile = CSVpath+'dane_hydrologiczne/'+str(rok)+"/codz_"+str(rok)+'_'+str(mon).zfill(2)+'.csv'
+		
+				try:
+					gauges_CSV = dict(self.getGaugesFromFile(CSVfile))
+					print(CSVfile)
+					df = pd.read_csv(CSVfile,encoding='windows-1250',header=None)
+					'''corection of year for hydrological year'''
+					if mon<3:
+						df[3]-=1
+						
+					ww=pd.DataFrame(df.loc[:,0])
+					codes = ww.drop_duplicates()
+
+					#code = 149180020
+					for code in codes[0]:
+						print('Processing '+str(code)+'...')
+						df_measurements = self.getMeasurementsByCode(df,code)
+						self.storeMeasurements(df_measurements,str(code))
+					
+				except OSError:
+					print("Problems reading file "+CSVfile)
 
 
 	def DBlistHydroGauges(self):

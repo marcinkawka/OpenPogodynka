@@ -5,7 +5,7 @@ def main():
 	d = DBInterface()
 	print("Hello World!")
 	print(CSVpath)
-	d.CSVlistHydroGauges()
+	d.CSVparseMeasurements()
   
 if __name__== "__main__":
   main()
