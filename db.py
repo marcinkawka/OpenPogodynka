@@ -40,6 +40,30 @@ class DBInterface:
 		
 		return gauges
 
+	def getMeasurementsFromDB(self,code):
+		'''pomiary pobierane z bazy danych jako DataFrame'''		
+		try:
+			sqlQuery = "SELECT discharge,temperature,level,measurement_date from measurements where gauge_code="+str(code)
+			print(sqlQuery)
+			mes=pd.read_sql(sqlQuery,self.conn,parse_dates={'measurement_date':'%Y-%m-%d %H:%M:%S'})
+			mes2=mes.set_index('measurement_date')
+			
+			
+		except:
+			print("Unexpected error:", sys.exc_info())
+		return mes2
+
+	def storeDischargeAgregates(self,df):
+		''' Stores gauges into sqlite db'''
+		c = self.conn.cursor()
+		try:
+			df.to_sql('monthlyDischarges',self.conn,if_exists='append')
+
+			#to_sql(name, con, flavor=None, schema=None, if_exists='fail', index=True, index_label=None, chunksize=None, dtype=None)[source]
+		except:
+			print("Unexpected error:", sys.exc_info())
+	
+
 	def storeGauges(self,gauges):
 		''' Stores gauges into sqlite db'''
 		c = self.conn.cursor()
@@ -85,6 +109,7 @@ class DBInterface:
 		pomiary=pomiary.set_index(pd.to_datetime(dd+" 07:00"))
 		pomiary=pomiary.replace('99.9','None')
 		pomiary=pomiary.replace('99999.999','None')
+		pomiary=pomiary.replace('99999.99900000001','None')
 		pomiary['gauge_code']=code
 		return pomiary
 
@@ -115,7 +140,7 @@ class DBInterface:
 	def CSVparseMeasurements(self):
 		'''iterates through CSV files and stores data in SQLiteFile'''
 		
-		for rok in range(2005,2017):
+		for rok in range(1951,1960 ):
 			print("Processing year "+str(rok))
 			for mon in range(1,13):
 				CSVfile = CSVpath+'dane_hydrologiczne/'+str(rok)+"/codz_"+str(rok)+'_'+str(mon).zfill(2)+'.csv'
@@ -133,13 +158,14 @@ class DBInterface:
 
 					#code = 149180020
 					for code in codes[0]:
-						print('Processing '+str(code)+'...')
+						#print('Processing '+str(code)+'...')
 						df_measurements = self.getMeasurementsByCode(df,code)
 						self.storeMeasurements(df_measurements,str(code))
 					
 				except OSError:
 					print("Problems reading file "+CSVfile)
-
+				except:
+					print("Error processing gauge "+str(code)+" from "+str(mon)+" / "+str(rok))	
 
 	def DBlistHydroGauges(self):
 		''' Returns list of all hydrological gauges in 	'''
