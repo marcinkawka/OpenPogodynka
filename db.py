@@ -44,7 +44,6 @@ class DBInterface:
 		'''pomiary pobierane z bazy danych jako DataFrame'''		
 		try:
 			sqlQuery = "SELECT discharge,temperature,level,measurement_date from measurements where gauge_code="+str(code)
-			print(sqlQuery)
 			mes=pd.read_sql(sqlQuery,self.conn,parse_dates={'measurement_date':'%Y-%m-%d %H:%M:%S'})
 			mes2=mes.set_index('measurement_date')
 			
@@ -59,7 +58,6 @@ class DBInterface:
 		try:
 			df.to_sql('monthlyDischarges',self.conn,if_exists='append')
 
-			#to_sql(name, con, flavor=None, schema=None, if_exists='fail', index=True, index_label=None, chunksize=None, dtype=None)[source]
 		except:
 			print("Unexpected error:", sys.exc_info())
 	
