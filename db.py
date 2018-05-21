@@ -40,6 +40,16 @@ class DBInterface:
 		
 		return gauges
 
+	def getMonthlyStatsFromDB(self,code):
+		'''pomiary pobierane z bazy danych jako DataFrame'''		
+		try:
+			sqlQuery = "SELECT WQ,SQ,NQ,ZQ,measurement_date from monthlyDischarges where gauge_code="+str(code)
+			mes=pd.read_sql(sqlQuery,self.conn,parse_dates={'measurement_date':'%Y-%m-%d %H:%M:%S'})
+			
+		except:
+			print("Unexpected error:", sys.exc_info())
+		return mes
+
 	def getMeasurementsFromDB(self,code):
 		'''pomiary pobierane z bazy danych jako DataFrame'''		
 		try:
