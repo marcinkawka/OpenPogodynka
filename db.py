@@ -67,11 +67,29 @@ class DBInterface:
 		c = self.conn.cursor()
 		try:
 			df.to_sql('monthlyDischarges',self.conn,if_exists='append')
-
 		except:
 			print("Unexpected error:", sys.exc_info())
 	
 
+	def storeYDischargeAgregates(self,df):
+		''' Stores gauges into sqlite db'''
+		c = self.conn.cursor()
+		try:
+			df.to_sql('yearlyDischarges',self.conn,if_exists='append',index_label='year')
+		except:
+			print("Unexpected error:", sys.exc_info())
+	
+	def updateGaugesLocation(self,gauges):
+		'''updates locations for all gauges in given DataFrame'''
+		c = self.conn.cursor()
+		for gauge in gauges.iterrows():
+			#gauge[0] - index
+			try:
+				sqlQuery="UPDATE hydroGauges set long ="+str(gauge[1]['long'])+" ,lat="+str(gauge[1]['lat'])+" where code="+str(gauge[0])
+				c.execute(sqlQuery)
+				self.conn.commit()
+			except:
+				print("Unexpected error:", sys.exc_info())
 	def storeGauges(self,gauges):
 		''' Stores gauges into sqlite db'''
 		c = self.conn.cursor()

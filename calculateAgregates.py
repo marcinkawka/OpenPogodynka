@@ -7,7 +7,6 @@ import datetime as dt
 
 #def main():
 d = DBInterface()
-print("Hello World!")
 gauges = dict(d.getGaugesFromDB())
 '''
 TODO:
@@ -56,9 +55,9 @@ def calculateMonthly():
 
 		d.storeDischargeAgregates(mQ)
 
-roki = [1951,1952,1953]
-codes= [152210010]
+
 #def calculateYearly():
+db = DBInterface()
 for code in codes:	
 	mQ=[]
 	mes=d.getMonthlyStatsFromDB(code)
@@ -66,7 +65,7 @@ for code in codes:
 	mes=mes.convert_objects(convert_numeric=True)
 	mes["measurement_date"]=pd.to_datetime(mes["measurement_date"])
 
-	rok=1953
+	
 	przeplywy = pd.DataFrame(columns=('WWQ','SWQ','SSQ','SNQ','NNQ'))
 	
 	for rok in range(1952,2016):
@@ -82,8 +81,10 @@ for code in codes:
 		TODO: 1.Zapis do SQLa
 			2. Agregaty półroczne	
 		'''
-		
+	przeplywy["gauge_code"]=code	
 	przeplywy.dropna(inplace=True)		
+	#przeplywy['year']=przeplywy.index
+	db.storeYDischargeAgregates(przeplywy)
 
 #print(mes)
 #def main():
