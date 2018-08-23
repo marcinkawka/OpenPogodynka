@@ -32,7 +32,7 @@ class DBInterface:
 		c = self.conn.cursor()
 		gauges=[]
 		try:
-			sqlQuery = "SELECT code,name from hydroGauges"
+			sqlQuery = "SELECT code,name,long,lat,river from hydroGauges"
 			for row in c.execute(sqlQuery):
 				gauges.append(row)
 		except:

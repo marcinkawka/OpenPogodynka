@@ -1,7 +1,4 @@
-from bokeh.plotting import figure, show, output_file
-from bokeh.tile_providers import CARTODBPOSITRON
-from bokeh.models import ColumnDataSource
-from bokeh.io import output_file, show
+
 import pandas as pd
 import math
 import numpy as np
@@ -16,23 +13,6 @@ def convertCoordinates(lon,lat):
     y = y * 20037508.34 / 180;
     return (x, y)
 
-def createBokehMap(df):
-	'''funkcja sprawdzająca tworzy mapkę POlski z wczytanymi wodowskazami na podstawie DataFrame'''
-	output_file("tile.html")
-	p = figure(x_range=(1220000, 2800000), y_range=(6100000, 7370000),
-          x_axis_type="mercator", y_axis_type="mercator")
-	p.add_tile(CARTODBPOSITRON)
-	
-	dff=pd.DataFrame([lat,longg]).transpose()
-	dff=dff.rename(columns={0:'lat',1:'long',2:'x',3:'y'})
-	dff['x']=0
-	dff['y']=0
-	dff['x']=dff['long'] * 20037508.34 / 180
-	dff['y']=np.log(np.tan((90 + dff['lat']) * math.pi / 360)) / (math.pi / 180)* 20037508.34 / 180
-	source = ColumnDataSource(dff[['x','y']])
-
-	p.circle(x="x", y="y", size=4, fill_color="blue", fill_alpha=0.8, source=source)
-	show(p)
 
 
 
